@@ -2,17 +2,35 @@ package main
 
 import (
 	"github.com/sirupsen/logrus"
-	"goyak/model"
+	"net/http"
+	"time"
+)
+
+const (
+	Addr = ":3000"
 )
 
 func main() {
-	if db, err := SetupDatabase(); err == nil {
-		logrus.Infof("Perform checking if users table exists: %v", db.HasTable(&model.User{}))
-		logrus.Infof("Perform checking if messages table exists: %v", db.HasTable(&model.Message{}))
-		logrus.Infof("Perform checking if chat_rooms table exists: %v", db.HasTable(&model.ChatRoom{}))
+	logrus.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+	})
 
-		defer db.Close()
-	} else {
+	db, err := SetupDatabase()
+
+	if err != nil {
 		logrus.Error(err)
+		return
+	} else {
+		defer db.Close()
 	}
+
+	server := &http.Server{
+		Handler:      LoadRoutes(db),
+		Addr:         Addr,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	logrus.Infof("Server is listening and serving on port %v", Addr)
+	logrus.Fatal(server.ListenAndServe())
 }
