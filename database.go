@@ -3,25 +3,21 @@ package main
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/sirupsen/logrus"
+	"goyak/model"
 )
 
-func main() {
+// SetupDatabase will perform database connection and auto migration on all gorm.Models
+func SetupDatabase() (*gorm.DB, error) {
 	db, err := gorm.Open(
 		"postgres",
 		"user=cfeng password=cfeng dbname=goyak_development sslmode=disable",
 	)
 
 	if err != nil {
-		logrus.Error(err)
-	} else {
-		// Perform auto migrations
-		db.AutoMigrate(&User{}, &Email{}, &Message{})
+		return nil, err
 	}
 
-	logrus.Infof("Perform checking if users table exists: %v", db.HasTable(&User{}))
-	logrus.Infof("Perform checking if emails table exists: %v", db.HasTable(&Email{}))
-	logrus.Infof("Perform checking if messages table exists: %v", db.HasTable(&Message{}))
+	db.AutoMigrate(&model.User{}, &model.Message{}, &model.ChatRoom{})
 
-	defer db.Close()
+	return db, nil
 }
