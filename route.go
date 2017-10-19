@@ -27,6 +27,7 @@ func LoadRoutes(db *gorm.DB) http.Handler {
 	api.Handle("/users", handler.NewUserListHandler(db)).Methods("GET")
 	api.Handle("/users", handler.NewUserCreateHandler(db)).Methods("POST")
 	api.Handle("/user/{id:[0-9]+}", handler.NewUserRetrieveHandler(db)).Methods("GET")
+	api.Handle("/authenticate", handler.NewSessionCreateHandler(db)).Methods("GET")
 
 	return handlers.CORS()(logMiddleware(muxRouter))
 }
