@@ -40,44 +40,65 @@ func NewUserRetrieveHandler(db *gorm.DB) http.HandlerFunc {
 // 	logrus.Print("Password is correct")
 // }
 
+type UserResponse struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 func NewUserCreateHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var responseByteArray []byte
-
 		if err := r.ParseForm(); err != nil {
 			logrus.Error(err)
 		}
 
 		name, email, password := r.PostFormValue("name"), r.PostFormValue("email"), r.PostFormValue("password")
-		 if len(email) == 0 || len(password) == 0 {
-		 	http.Error(w, "Please provide email and password for user sign up", 400)
-		 	return
-		 }
-
-		if hashBytes, err := bcrypt.GenerateFromPassword([]byte(password), 10); err == nil {
-			newUser := model.User{
-				Name:           name,
-				Email:          email,
-				PasswordDigest: hashBytes,
-			}
-
-			if err := db.Create(&newUser).Error; err != nil {
-				http.Error(w, err.Error(), 400)
-				return
-			}
-
-			if bytes, err := json.Marshal(newUser); err == nil {
-				responseByteArray = bytes
-			} else {
-				http.Error(w, err.Error(), 500)
-				return
-			}
-		} else {
-			http.Error(w, err.Error(), 500)
+		if len(email) == 0 || len(password) == 0 {
+			RenderError(w, "Please Provide email and password for user sign up", 400)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		w.Write(responseByteArray)
+		hashBytes, hashErr := bcrypt.GenerateFromPassword([]byte(password), 10)
+		if hashErr != nil {
+			RenderError(w, hashErr.Error(), 500)
+			return
+		}
+
+		newUser := model.User{
+			Name:           name,
+			Email:          email,
+			PasswordDigest: hashBytes,
+		}
+
+		if err := db.Create(&newUser).Error; err != nil {
+			RenderError(w, err.Error(), 400)
+			return
+		}
+
+		res := UserResponse{
+			Name:  newUser.Name,
+			Email: newUser.Email,
+		}
+
+		if bytes, err := json.Marshal(res); err != nil {
+			RenderError(w, err.Error(), 500)
+			return
+		} else {
+			w.WriteHeader(http.StatusOK)
+			w.Write(bytes)
+		}
 	}
+}
+
+func RenderError(w http.ResponseWriter, message string, code int) {
+	res := ErrorResponse{
+		Error: message,
+	}
+
+	bytes, _ := json.Marshal(res)
+	w.WriteHeader(code)
+	w.Write(bytes)
 }
