@@ -8,8 +8,9 @@ import "github.com/jinzhu/gorm"
 // Default table name is users
 type User struct {
 	gorm.Model
-	Name      string
-	Email     string     `gorm:"type:varchar(100);unique_index"` // Set SQL type and create unique indexing
-	ChatRooms []ChatRoom `gorm:"many2many:memberships"`       // many-to-many
-	Messages  []Message  `gorm:"ForeignKey:UserID"`              // has-many
+	Name           string     `gorm:"type:varchar(100)" json:"name"`
+	Email          string     `gorm:"type:varchar(100);unique_index" json:"email"` // Set SQL type and create unique indexing
+	PasswordDigest []byte     `gorm:"type:bytea;unique_index"`
+	ChatRooms      []ChatRoom `gorm:"many2many:memberships"` // many-to-many
+	Messages       []Message  `gorm:"ForeignKey:UserID"`     // has-many
 }

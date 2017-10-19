@@ -10,5 +10,5 @@ type ChatRoom struct {
 	gorm.Model
 	Name     string
 	Users    []User    `gorm:"many2many:memberships;"` // many-to-many
-	Messages []Message `gorm:"ForeignKey:ChatRoomID"`     // has-many
+	Messages []Message `gorm:"ForeignKey:ChatRoomID"`  // has-many
 }

@@ -31,6 +31,6 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	logrus.Infof("Server is listening and serving on port %v", Addr)
+	logrus.Infof("HTTP server is listening and serving on port %v", Addr)
 	logrus.Fatal(server.ListenAndServe())
 }

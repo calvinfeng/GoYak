@@ -1,8 +1,8 @@
 package main
 
 import (
-	"net/http"
 	"github.com/sirupsen/logrus"
+	"net/http"
 )
 
 type HttpMiddleware func(http.Handler) http.Handler
