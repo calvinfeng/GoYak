@@ -25,6 +25,13 @@ I fucking love Homebrew on Mac. It has everything!
 I am going to use PostgreSQL for this project, so let's create one. The superuser on my computer is `cfeng` so I will
 use that to create a database named `goyak_development`
 
+If you don't have a role or wish to create a separate role for this project, then just do the following
+```
+$ psql postgres
+postgres=# create role <name> superuser login;
+```
+
+Then create a database named `goyak_development`
 ```
 $ psql postgres
 postgres=# create database goyak_development;

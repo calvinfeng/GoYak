@@ -34,6 +34,12 @@ func NewUserRetrieveHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
+// if err := bcrypt.CompareHashAndPassword(hashBytes, []byte("12367")); err != nil {
+// 	logrus.Error("Incorrect password")
+// } else {
+// 	logrus.Print("Password is correct")
+// }
+
 func NewUserCreateHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var responseByteArray []byte
@@ -42,36 +48,30 @@ func NewUserCreateHandler(db *gorm.DB) http.HandlerFunc {
 			logrus.Error(err)
 		}
 
-		// name, email, password := r.PostFormValue("name"), r.PostFormValue("email"), r.PostFormValue("password")
-		name, email, password := "Calvin", "calvin@example.com", "1234"
-		// if len(email) == 0 || len(password) == 0 {
-		// 	http.Error(w, "Please provide email and password for user sign up", 400)
-		// 	return
-		// }
+		name, email, password := r.PostFormValue("name"), r.PostFormValue("email"), r.PostFormValue("password")
+		 if len(email) == 0 || len(password) == 0 {
+		 	http.Error(w, "Please provide email and password for user sign up", 400)
+		 	return
+		 }
 
 		if hashBytes, err := bcrypt.GenerateFromPassword([]byte(password), 10); err == nil {
-			// if err := bcrypt.CompareHashAndPassword(hashBytes, []byte("12367")); err != nil {
-			// 	logrus.Error("Incorrect password")
-			// } else {
-			// 	logrus.Print("Password is correct")
-			// }
 			newUser := model.User{
 				Name:           name,
 				Email:          email,
 				PasswordDigest: hashBytes,
 			}
 
-			db.Create(&newUser)
-
-			if len(db.GetErrors()) != 0 {
-				http.Error(w, db.Error.Error(), 400)
+			if err := db.Create(&newUser).Error; err != nil {
+				http.Error(w, err.Error(), 400)
 				return
 			}
 
 			if bytes, err := json.Marshal(newUser); err == nil {
 				responseByteArray = bytes
+			} else {
+				http.Error(w, err.Error(), 500)
+				return
 			}
-
 		} else {
 			http.Error(w, err.Error(), 500)
 			return
