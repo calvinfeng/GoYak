@@ -19,7 +19,7 @@ func LoadRoutes(db *gorm.DB) http.Handler {
 	logMiddleware := NewServerLoggingMiddleware()
 
 	muxRouter := mux.NewRouter().StrictSlash(true)
-	muxRouter.Handle("/", http.FileServer(http.Dir("./static/")))
+	muxRouter.PathPrefix("/").Handler(http.FileServer(http.Dir("static")))
 
 	// Namespacing the API
 	api := muxRouter.PathPrefix("/api").Subrouter()

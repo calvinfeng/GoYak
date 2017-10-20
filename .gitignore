@@ -1,3 +1,7 @@
 *.idea
 *.iml
 vendor/
+static/index.bundle.js
+static/index.bundle.js.map
+static/index.bundle.css
+ui/node_modules/
