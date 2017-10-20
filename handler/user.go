@@ -34,15 +34,10 @@ func NewUserRetrieveHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-// if err := bcrypt.CompareHashAndPassword(hashBytes, []byte("12367")); err != nil {
-// 	logrus.Error("Incorrect password")
-// } else {
-// 	logrus.Print("Password is correct")
-// }
-
 type UserResponse struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	SessionToken string `json:"session_token"`
 }
 
 type ErrorResponse struct {
@@ -67,9 +62,15 @@ func NewUserCreateHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
+		token, tokenErr := GenerateRandomString(64)
+		if tokenErr != nil {
+			RenderError(w, tokenErr.Error(), 500)
+		}
+
 		newUser := model.User{
 			Name:           name,
 			Email:          email,
+			SessionToken:   token,
 			PasswordDigest: hashBytes,
 		}
 
@@ -79,8 +80,9 @@ func NewUserCreateHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		res := UserResponse{
-			Name:  newUser.Name,
-			Email: newUser.Email,
+			Name:         newUser.Name,
+			Email:        newUser.Email,
+			SessionToken: newUser.SessionToken,
 		}
 
 		if bytes, err := json.Marshal(res); err != nil {
@@ -91,14 +93,4 @@ func NewUserCreateHandler(db *gorm.DB) http.HandlerFunc {
 			w.Write(bytes)
 		}
 	}
-}
-
-func RenderError(w http.ResponseWriter, message string, code int) {
-	res := ErrorResponse{
-		Error: message,
-	}
-
-	bytes, _ := json.Marshal(res)
-	w.WriteHeader(code)
-	w.Write(bytes)
 }
