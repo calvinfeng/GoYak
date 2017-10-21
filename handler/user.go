@@ -13,8 +13,30 @@ import (
 
 func NewUserListHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("User list is here!"))
+		var users []model.User
+
+		if err := db.Find(&users).Error; err != nil {
+			RenderError(w, err.Error(), 400)
+			return
+		}
+
+		res := []UserResponse{}
+		for _, user := range users {
+			userResponse := UserResponse{
+				Name: user.Name,
+				Email: user.Email,
+			}
+
+			res = append(res, userResponse)
+		}
+
+		if bytes, err := json.Marshal(res); err != nil {
+			RenderError(w, err.Error(), 500)
+			return
+		} else {
+			w.WriteHeader(http.StatusOK)
+			w.Write(bytes)
+		}
 	}
 }
 

@@ -19,15 +19,16 @@ func LoadRoutes(db *gorm.DB) http.Handler {
 	logMiddleware := NewServerLoggingMiddleware()
 
 	muxRouter := mux.NewRouter().StrictSlash(true)
-	muxRouter.PathPrefix("/").Handler(http.FileServer(http.Dir("static")))
 
-	// Namespacing the API
+	// Name-spacing the API
 	api := muxRouter.PathPrefix("/api").Subrouter()
 
 	api.Handle("/users", handler.NewUserListHandler(db)).Methods("GET")
+	api.Handle("/users/{id:[0-9]+}", handler.NewUserRetrieveHandler(db)).Methods("GET")
 	api.Handle("/users", handler.NewUserCreateHandler(db)).Methods("POST")
-	api.Handle("/user/{id:[0-9]+}", handler.NewUserRetrieveHandler(db)).Methods("GET")
 	api.Handle("/authenticate", handler.NewSessionCreateHandler(db)).Methods("POST")
+
+	muxRouter.PathPrefix("/").Handler(http.FileServer(http.Dir("static")))
 
 	return handlers.CORS()(logMiddleware(muxRouter))
 }
