@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
 	"goyak/handler"
 	"net/http"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
 /*
@@ -14,7 +14,7 @@ import (
 	equivalent to show in Rails.
 */
 
-func LoadRoutes(db *gorm.DB) http.Handler {
+func LoadRoutes() http.Handler {
 	// Defining middleware
 	logMiddleware := NewServerLoggingMiddleware()
 
@@ -23,10 +23,10 @@ func LoadRoutes(db *gorm.DB) http.Handler {
 	// Name-spacing the API
 	api := muxRouter.PathPrefix("/api").Subrouter()
 
-	api.Handle("/users", handler.NewUserListHandler(db)).Methods("GET")
-	api.Handle("/users/{id:[0-9]+}", handler.NewUserRetrieveHandler(db)).Methods("GET")
-	api.Handle("/users", handler.NewUserCreateHandler(db)).Methods("POST")
-	api.Handle("/authenticate", handler.NewSessionCreateHandler(db)).Methods("POST")
+	api.Handle("/users/", handler.NewUserListHandler()).Methods("GET")
+	api.Handle("/users/{id:[0-9]+}", handler.NewUserRetrieveHandler()).Methods("GET")
+	api.Handle("/users/", handler.NewUserCreateHandler()).Methods("POST")
+	api.Handle("/authenticate/", handler.NewSessionCreateHandler()).Methods("POST")
 
 	muxRouter.PathPrefix("/").Handler(http.FileServer(http.Dir("static")))
 

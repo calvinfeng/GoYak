@@ -3,27 +3,26 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
 	"goyak/model"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
-func NewUserListHandler(db *gorm.DB) http.HandlerFunc {
+func NewUserListHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var users []model.User
 
-		if err := db.Find(&users).Error; err != nil {
-			RenderError(w, err.Error(), 400)
-			return
-		}
+		// if err := db.Find(&users).Error; err != nil {
+		// 	RenderError(w, err.Error(), 400)
+		// 	return
+		// }
 
 		res := []UserResponse{}
 		for _, user := range users {
 			userResponse := UserResponse{
-				Name: user.Name,
+				Name:  user.Name,
 				Email: user.Email,
 			}
 
@@ -40,7 +39,7 @@ func NewUserListHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func NewUserRetrieveHandler(db *gorm.DB) http.HandlerFunc {
+func NewUserRetrieveHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var responseText string
 
@@ -66,45 +65,36 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func NewUserCreateHandler(db *gorm.DB) http.HandlerFunc {
+func NewUserCreateHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			logrus.Error(err)
 		}
 
-		name, email, password := r.PostFormValue("name"), r.PostFormValue("email"), r.PostFormValue("password")
-		if len(email) == 0 || len(password) == 0 {
-			RenderError(w, "Please Provide email and password for user sign up", 400)
-			return
+		u := &model.User{
+			Name:     r.PostFormValue("name"),
+			Email:    r.PostFormValue("email"),
+			Password: r.PostFormValue("password"),
 		}
 
-		hashBytes, hashErr := bcrypt.GenerateFromPassword([]byte(password), 10)
-		if hashErr != nil {
-			RenderError(w, hashErr.Error(), 500)
-			return
-		}
+		err := u.Create()
+		if err != nil {
+			switch err.(type) {
+			case *model.DatabaseError:
+				RenderError(w, fmt.Sprintf("encountered database error: %s", err.Error()), 422)
+			case *model.ValidationError:
+				RenderError(w, fmt.Sprintf("encountered validation error: %s", err.Error()), 422)
+			default:
+				RenderError(w, err.Error(), 500)
+			}
 
-		token, tokenErr := GenerateRandomString(64)
-		if tokenErr != nil {
-			RenderError(w, tokenErr.Error(), 500)
-		}
-
-		newUser := model.User{
-			Name:           name,
-			Email:          email,
-			SessionToken:   token,
-			PasswordDigest: hashBytes,
-		}
-
-		if err := db.Create(&newUser).Error; err != nil {
-			RenderError(w, err.Error(), 400)
 			return
 		}
 
 		res := UserResponse{
-			Name:         newUser.Name,
-			Email:        newUser.Email,
-			SessionToken: newUser.SessionToken,
+			Name:         u.Name,
+			Email:        u.Email,
+			SessionToken: u.SessionToken,
 		}
 
 		if bytes, err := json.Marshal(res); err != nil {

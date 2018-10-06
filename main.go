@@ -1,9 +1,11 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
+	"goyak/model"
 	"net/http"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -15,17 +17,17 @@ func main() {
 		FullTimestamp: true,
 	})
 
-	db, err := SetupDatabase()
+	err := model.SetupDatabase()
 
 	if err != nil {
 		logrus.Error(err)
 		return
-	} else {
-		defer db.Close()
 	}
 
+	defer model.PGConn.Close()
+
 	server := &http.Server{
-		Handler:      LoadRoutes(db),
+		Handler:      LoadRoutes(),
 		Addr:         Addr,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,

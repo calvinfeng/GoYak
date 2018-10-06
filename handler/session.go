@@ -2,10 +2,10 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/jinzhu/gorm"
-	"golang.org/x/crypto/bcrypt"
 	"goyak/model"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type SessionResponse struct {
@@ -13,7 +13,7 @@ type SessionResponse struct {
 	SessionToken string `json:"session_token"`
 }
 
-func NewSessionCreateHandler(db *gorm.DB) http.HandlerFunc {
+func NewSessionCreateHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		email, password := r.PostFormValue("email"), r.PostFormValue("password")
 		if len(email) == 0 || len(password) == 0 {
@@ -22,10 +22,10 @@ func NewSessionCreateHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		var user model.User
-		if err := db.Where("email = ?", email).First(&user).Error; err != nil {
-			RenderError(w, "Email is not recognized", 400)
-			return
-		}
+		// if err := db.Where("email = ?", email).First(&user).Error; err != nil {
+		// 	RenderError(w, "Email is not recognized", 400)
+		// 	return
+		// }
 
 		if err := bcrypt.CompareHashAndPassword(user.PasswordDigest, []byte(password)); err != nil {
 			RenderError(w, "Incorrect password", 400)
